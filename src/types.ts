@@ -13,6 +13,16 @@ export interface Exercise {
   hints: string[];
   answer: string;
   validation: ValidationRule;
+  kind?: "模仿" | "补全" | "改错" | "独立" | "综合";
+}
+
+export interface WorkbookUnit {
+  id: string;
+  number: number;
+  title: string;
+  subtitle: string;
+  focus: string[];
+  exercises: Exercise[];
 }
 
 export interface Lesson {
@@ -36,6 +46,10 @@ export interface ProgressState {
   completedExercises: string[];
   codeByExercise: Record<string, string>;
   lastLessonId: string;
+  workbookCompleted: string[];
+  workbookCode: Record<string, string>;
+  lastWorkbookUnit: string;
+  lastMode: "textbook" | "workbook";
 }
 
 export interface RunResult {

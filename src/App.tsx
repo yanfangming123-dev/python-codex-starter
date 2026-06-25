@@ -1,19 +1,25 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  ArrowLeft, ArrowRight, BookOpen, Check, CheckCircle2, ChevronDown,
+  ArrowLeft, ArrowRight, BookOpen, Check, CheckCircle2, Dumbbell,
   Clipboard, Code2, GraduationCap, Lightbulb, Menu, Play, RotateCcw,
   Sparkles, Square, Terminal, Trash2, X
 } from "lucide-react";
 import { codexFramework, lessons } from "./course";
-import type { Exercise, ProgressState, RunResult, ValidationRule } from "./types";
+import { workbookExerciseCount, workbookUnits } from "./workbook";
+import type { Exercise, ProgressState, RunResult, ValidationRule, WorkbookUnit } from "./types";
 import { usePythonRunner } from "./usePythonRunner";
 
 const STORAGE_KEY = "python-codex-progress-v1";
+const MODE_KEY = "python-codex-view-v1";
 const defaultProgress: ProgressState = {
   completedLessons: [],
   completedExercises: [],
   codeByExercise: {},
-  lastLessonId: lessons[0].id
+  lastLessonId: lessons[0].id,
+  workbookCompleted: [],
+  workbookCode: {},
+  lastWorkbookUnit: workbookUnits[0].id,
+  lastMode: "textbook"
 };
 
 function loadProgress(): ProgressState {
@@ -23,6 +29,10 @@ function loadProgress(): ProgressState {
   } catch {
     return defaultProgress;
   }
+}
+
+function loadMode(): "textbook" | "workbook" {
+  return localStorage.getItem(MODE_KEY) === "workbook" ? "workbook" : "textbook";
 }
 
 function validate(rule: ValidationRule, code: string, output: string) {
@@ -157,9 +167,107 @@ function ExerciseCard({
   );
 }
 
+function WorkbookView({
+  unit,
+  completed,
+  codeByExercise,
+  onCodeChange,
+  onComplete,
+  onSelectUnit
+}: {
+  unit: WorkbookUnit;
+  completed: string[];
+  codeByExercise: Record<string, string>;
+  onCodeChange: (id: string, code: string) => void;
+  onComplete: (id: string) => void;
+  onSelectUnit: (id: string) => void;
+}) {
+  const [exerciseIndex, setExerciseIndex] = useState(0);
+  const exercise = unit.exercises[exerciseIndex];
+  const unitDone = unit.exercises.filter((item) => completed.includes(item.id)).length;
+  const unitPercent = Math.round((unitDone / unit.exercises.length) * 100);
+
+  useEffect(() => {
+    setExerciseIndex(0);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [unit.id]);
+
+  return (
+    <>
+      <div className="lesson-topbar">
+        <span><Dumbbell size={16} /> 初级配套练习册</span>
+        <span>单元 {unit.number} / {workbookUnits.length}</span>
+      </div>
+      <section className="lesson-hero workbook-hero">
+        <div className="hero-meta"><span>WORKBOOK {String(unit.number).padStart(2, "0")}</span><i /><span>{unit.exercises.length} 道练习</span></div>
+        <h1>{unit.title}</h1>
+        <p>{unit.subtitle}。先独立尝试，再看提示；参考答案只用来复盘，不用来赶进度。</p>
+        <div className="hero-chips">
+          {unit.focus.map((focus) => <span key={focus}><Check size={15} /> {focus}</span>)}
+        </div>
+      </section>
+      <div className="content-column workbook-column">
+        <section className="workbook-dashboard">
+          <div>
+            <span className="section-kicker">本单元进度</span>
+            <h2>{unitDone} / {unit.exercises.length} 完成</h2>
+          </div>
+          <div className="workbook-progress"><i style={{ width: `${unitPercent}%` }} /></div>
+          <p>建议正确完成后，隔一天在 Thonny 中从空白重写一道“独立”或“综合”题。</p>
+        </section>
+
+        <nav className="exercise-picker" aria-label="练习题目录">
+          {unit.exercises.map((item, index) => (
+            <button
+              key={item.id}
+              className={`${index === exerciseIndex ? "active" : ""} ${completed.includes(item.id) ? "done" : ""}`}
+              onClick={() => setExerciseIndex(index)}
+              aria-label={`第 ${index + 1} 题：${item.title}`}
+            >
+              {completed.includes(item.id) ? <Check size={14} /> : index + 1}
+            </button>
+          ))}
+        </nav>
+
+        <div className="workbook-question-meta">
+          <span>第 {exerciseIndex + 1} / {unit.exercises.length} 题</span>
+          <b className={`kind-badge kind-${exercise.kind}`}>{exercise.kind}</b>
+        </div>
+
+        <ExerciseCard
+          key={exercise.id}
+          exercise={exercise}
+          code={codeByExercise[exercise.id] ?? exercise.starterCode}
+          setCode={(value) => onCodeChange(exercise.id, value)}
+          completed={completed.includes(exercise.id)}
+          toggleComplete={() => onComplete(exercise.id)}
+        />
+
+        <nav className="bottom-nav workbook-bottom-nav">
+          <button disabled={exerciseIndex === 0} onClick={() => setExerciseIndex((index) => index - 1)}><ArrowLeft /> 上一题</button>
+          {exerciseIndex < unit.exercises.length - 1 ? (
+            <button className="next-button" onClick={() => setExerciseIndex((index) => index + 1)}>下一题 <ArrowRight /></button>
+          ) : unit.number < workbookUnits.length ? (
+            <button className="next-button" onClick={() => onSelectUnit(workbookUnits[unit.number].id)}>下一单元 <ArrowRight /></button>
+          ) : null}
+        </nav>
+
+        {unitDone === unit.exercises.length && (
+          <section className="unit-complete">
+            <CheckCircle2 size={28} />
+            <div><span>单元完成</span><h2>基础又扎实了一层。</h2><p>不要急着刷下一单元。挑一道综合题，到 Thonny 中不看答案重写一次。</p></div>
+          </section>
+        )}
+      </div>
+    </>
+  );
+}
+
 function App() {
   const [progress, setProgress] = useState<ProgressState>(loadProgress);
+  const [mode, setMode] = useState<"textbook" | "workbook">(loadMode);
   const [activeId, setActiveId] = useState(progress.lastLessonId);
+  const [workbookUnitId, setWorkbookUnitId] = useState(progress.lastWorkbookUnit);
   const [mobileMenu, setMobileMenu] = useState(false);
   const [exampleCode, setExampleCode] = useState("");
   const [exampleResult, setExampleResult] = useState<RunResult | null>(null);
@@ -171,6 +279,9 @@ function App() {
   const activeIndex = lessons.indexOf(activeLesson);
   const completedCount = progress.completedLessons.length;
   const percent = Math.round((completedCount / lessons.length) * 100);
+  const workbookUnit = workbookUnits.find((unit) => unit.id === workbookUnitId) ?? workbookUnits[0];
+  const workbookDone = progress.workbookCompleted.length;
+  const workbookPercent = Math.round((workbookDone / workbookExerciseCount) * 100);
   const lessonExerciseDone = activeLesson.exercises.filter((item) => progress.completedExercises.includes(item.id)).length;
 
   useEffect(() => {
@@ -222,6 +333,33 @@ function App() {
     setMobileMenu(false);
   };
 
+  const selectWorkbookUnit = (id: string) => {
+    setWorkbookUnitId(id);
+    setProgress((current) => ({ ...current, lastWorkbookUnit: id }));
+    setMobileMenu(false);
+  };
+
+  const switchMode = (nextMode: "textbook" | "workbook") => {
+    setMode(nextMode);
+    localStorage.setItem(MODE_KEY, nextMode);
+    setProgress((current) => ({ ...current, lastMode: nextMode }));
+    setMobileMenu(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const updateWorkbookCode = (id: string, value: string) => {
+    setProgress((current) => ({ ...current, workbookCode: { ...current.workbookCode, [id]: value } }));
+  };
+
+  const toggleWorkbookComplete = (id: string) => {
+    setProgress((current) => ({
+      ...current,
+      workbookCompleted: current.workbookCompleted.includes(id)
+        ? current.workbookCompleted.filter((item) => item !== id)
+        : [...current.workbookCompleted, id]
+    }));
+  };
+
   const copyText = async (text: string, id: string) => {
     await navigator.clipboard.writeText(text);
     setCopied(id);
@@ -237,7 +375,10 @@ function App() {
 
   const resetProgress = () => {
     setProgress(defaultProgress);
+    localStorage.setItem(MODE_KEY, "textbook");
+    setMode("textbook");
     setActiveId(lessons[0].id);
+    setWorkbookUnitId(workbookUnits[0].id);
     setShowReset(false);
   };
 
@@ -246,7 +387,7 @@ function App() {
       <header className="mobile-header">
         <button className="menu-button" onClick={() => setMobileMenu(true)} aria-label="打开课程目录"><Menu /></button>
         <div className="mini-brand"><span>Py</span>代码起步营</div>
-        <span className="mini-progress">{percent}%</span>
+        <span className="mini-progress">{mode === "textbook" ? percent : workbookPercent}%</span>
       </header>
 
       <aside className={`sidebar ${mobileMenu ? "open" : ""}`}>
@@ -255,18 +396,33 @@ function App() {
           <div><strong>代码起步营</strong><span>Python × Codex</span></div>
           <button className="close-menu" onClick={() => setMobileMenu(false)} aria-label="关闭课程目录"><X /></button>
         </div>
+        <div className="book-switcher" role="tablist" aria-label="教材与练习册">
+          <button role="tab" aria-selected={mode === "textbook"} className={mode === "textbook" ? "active" : ""} onClick={() => switchMode("textbook")}><BookOpen size={15} /> 教材</button>
+          <button role="tab" aria-selected={mode === "workbook"} className={mode === "workbook" ? "active" : ""} onClick={() => switchMode("workbook")}><Dumbbell size={15} /> 练习册</button>
+        </div>
         <div className="course-progress">
-          <div><span>初级 · 8 课</span><strong>{percent}%</strong></div>
-          <div className="progress-track"><i style={{ width: `${percent}%` }} /></div>
-          <p>{completedCount === 0 ? "从第一行代码开始，慢慢来。" : `已完成 ${completedCount} 课，继续保持好奇。`}</p>
+          <div><span>{mode === "textbook" ? "初级教材 · 8 课" : `配套练习 · ${workbookExerciseCount} 题`}</span><strong>{mode === "textbook" ? percent : workbookPercent}%</strong></div>
+          <div className="progress-track"><i style={{ width: `${mode === "textbook" ? percent : workbookPercent}%` }} /></div>
+          <p>{mode === "textbook"
+            ? (completedCount === 0 ? "从第一行代码开始，慢慢来。" : `已完成 ${completedCount} 课，继续保持好奇。`)
+            : (workbookDone === 0 ? "不赶进度，把每一个小动作练稳。" : `已完成 ${workbookDone} 题，坚持独立思考。`)}</p>
         </div>
         <nav className="lesson-nav" aria-label="课程目录">
-          {lessons.map((lesson) => {
+          {mode === "textbook" ? lessons.map((lesson) => {
             const isDone = progress.completedLessons.includes(lesson.id);
             return (
               <button key={lesson.id} className={lesson.id === activeId ? "active" : ""} onClick={() => selectLesson(lesson.id)}>
                 <span className={`lesson-dot ${isDone ? "done" : ""}`}>{isDone ? <Check size={14} /> : lesson.number}</span>
                 <span><small>{lesson.eyebrow}</small>{lesson.title}</span>
+              </button>
+            );
+          }) : workbookUnits.map((unit) => {
+            const done = unit.exercises.filter((item) => progress.workbookCompleted.includes(item.id)).length;
+            const isDone = done === unit.exercises.length;
+            return (
+              <button key={unit.id} className={unit.id === workbookUnitId ? "active" : ""} onClick={() => selectWorkbookUnit(unit.id)}>
+                <span className={`lesson-dot ${isDone ? "done" : ""}`}>{isDone ? <Check size={14} /> : unit.number}</span>
+                <span><small>{done} / {unit.exercises.length} 已完成</small>{unit.title}</span>
               </button>
             );
           })}
@@ -279,6 +435,17 @@ function App() {
       {mobileMenu && <button className="sidebar-scrim" onClick={() => setMobileMenu(false)} aria-label="关闭目录" />}
 
       <main className="main-content">
+        {mode === "workbook" ? (
+          <WorkbookView
+            unit={workbookUnit}
+            completed={progress.workbookCompleted}
+            codeByExercise={progress.workbookCode}
+            onCodeChange={updateWorkbookCode}
+            onComplete={toggleWorkbookComplete}
+            onSelectUnit={selectWorkbookUnit}
+          />
+        ) : (
+        <>
         <div className="lesson-topbar">
           <span><BookOpen size={16} /> 初级学习路径</span>
           <span>第 {activeLesson.number} / {lessons.length} 课</span>
@@ -377,6 +544,8 @@ function App() {
             )}
           </nav>
         </div>
+        </>
+        )}
       </main>
 
       {showReset && (
@@ -384,7 +553,7 @@ function App() {
           <div className="modal" role="dialog" aria-modal="true" onClick={(event) => event.stopPropagation()}>
             <div className="modal-icon"><Trash2 /></div>
             <h2>重置全部学习进度？</h2>
-            <p>课程完成状态和你写过的练习代码都会被清除。这个操作无法撤销。</p>
+            <p>教材与练习册的完成状态、你写过的代码都会被清除。这个操作无法撤销。</p>
             <div><button className="secondary-button" onClick={() => setShowReset(false)}>先不重置</button><button className="danger-button" onClick={resetProgress}>确认重置</button></div>
           </div>
         </div>
