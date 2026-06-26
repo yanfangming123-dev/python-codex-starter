@@ -35,6 +35,13 @@ button { cursor: pointer; }
 .brand strong { font-size: 16px; letter-spacing: .02em; }
 .brand > div:nth-child(2) span { font-size: 11px; margin-top: 3px; color: var(--muted); letter-spacing: .09em; text-transform: uppercase; }
 .close-menu { display: none; border: 0; background: transparent; margin-left: auto; color: var(--muted); }
+.track-switcher { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin: 14px 18px 0; }
+.track-switcher button { padding: 10px 9px; text-align: left; border: 1px solid #d4d1c7; border-radius: 12px; color: #73776f; background: #f7f5ef; }
+.track-switcher button span, .track-switcher button small { display: block; }
+.track-switcher button span { font-size: 13px; font-weight: 800; }
+.track-switcher button small { margin-top: 2px; font-size: 9px; color: #9b9c96; letter-spacing: .08em; text-transform: uppercase; }
+.track-switcher button.active { color: white; border-color: var(--green); background: var(--green); box-shadow: 0 7px 18px #245f4b22; }
+.track-switcher button.active small { color: #dcea8a; }
 .book-switcher { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; margin: 14px 18px 0; padding: 4px; border-radius: 10px; background: #e3e1d9; }
 .book-switcher button { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px; color: #74776f; border: 0; border-radius: 7px; background: transparent; font-size: 11px; font-weight: 700; }
 .book-switcher button.active { color: var(--green); background: var(--paper); box-shadow: 0 2px 8px #2831280d; }

@@ -26,6 +26,7 @@ export interface WorkbookUnit {
 }
 
 export type StudyMode = "textbook" | "workbook" | "exam";
+export type TrackId = "beginner" | "intermediate";
 
 export interface Lesson {
   id: string;
@@ -54,7 +55,26 @@ export interface ProgressState {
   examCompleted: string[];
   examCode: Record<string, string>;
   lastExamExercise: string;
+  lastTrack: TrackId;
   lastMode: StudyMode;
+}
+
+export interface LearningTrack {
+  id: TrackId;
+  title: string;
+  shortTitle: string;
+  levelLabel: string;
+  description: string;
+  textbookLabel: string;
+  workbookLabel: string;
+  examLabel: string;
+  heroBadge: string;
+  heroTone: string;
+  graduationTitle: string;
+  graduationText: string;
+  lessons: Lesson[];
+  workbookUnits: WorkbookUnit[];
+  examExercises: Exercise[];
 }
 
 export interface RunResult {

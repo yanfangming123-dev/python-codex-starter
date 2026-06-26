@@ -4,10 +4,9 @@ import {
   Clipboard, Code2, GraduationCap, Lightbulb, Menu, Play, RotateCcw,
   Sparkles, Square, Terminal, Trash2, Trophy, X
 } from "lucide-react";
-import { codexFramework, lessons } from "./course";
-import { examExerciseCount, examExercises } from "./exam";
-import { workbookExerciseCount, workbookUnits } from "./workbook";
-import type { Exercise, ProgressState, RunResult, StudyMode, ValidationRule, WorkbookUnit } from "./types";
+import { codexFramework } from "./course";
+import { defaultTrack, getTrack, learningTracks } from "./tracks";
+import type { Exercise, LearningTrack, ProgressState, RunResult, StudyMode, TrackId, ValidationRule, WorkbookUnit } from "./types";
 import { usePythonRunner } from "./usePythonRunner";
 
 const STORAGE_KEY = "python-codex-progress-v1";
@@ -16,13 +15,14 @@ const defaultProgress: ProgressState = {
   completedLessons: [],
   completedExercises: [],
   codeByExercise: {},
-  lastLessonId: lessons[0].id,
+  lastLessonId: defaultTrack.lessons[0].id,
   workbookCompleted: [],
   workbookCode: {},
-  lastWorkbookUnit: workbookUnits[0].id,
+  lastWorkbookUnit: defaultTrack.workbookUnits[0].id,
   examCompleted: [],
   examCode: {},
-  lastExamExercise: examExercises[0].id,
+  lastExamExercise: defaultTrack.examExercises[0].id,
+  lastTrack: defaultTrack.id,
   lastMode: "textbook"
 };
 
@@ -38,6 +38,10 @@ function loadProgress(): ProgressState {
 function loadMode(): StudyMode {
   const mode = localStorage.getItem(MODE_KEY);
   return mode === "workbook" || mode === "exam" ? mode : "textbook";
+}
+
+function loadTrack(progress: ProgressState): TrackId {
+  return progress.lastTrack === "intermediate" ? "intermediate" : "beginner";
 }
 
 function validate(rule: ValidationRule, code: string, output: string) {
@@ -174,6 +178,8 @@ function ExerciseCard({
 
 function WorkbookView({
   unit,
+  units,
+  track,
   completed,
   codeByExercise,
   onCodeChange,
@@ -181,6 +187,8 @@ function WorkbookView({
   onSelectUnit
 }: {
   unit: WorkbookUnit;
+  units: WorkbookUnit[];
+  track: LearningTrack;
   completed: string[];
   codeByExercise: Record<string, string>;
   onCodeChange: (id: string, code: string) => void;
@@ -200,8 +208,8 @@ function WorkbookView({
   return (
     <>
       <div className="lesson-topbar">
-        <span><Dumbbell size={16} /> 初级配套练习册</span>
-        <span>单元 {unit.number} / {workbookUnits.length}</span>
+        <span><Dumbbell size={16} /> {track.workbookLabel}</span>
+        <span>单元 {unit.number} / {units.length}</span>
       </div>
       <section className="lesson-hero workbook-hero">
         <div className="hero-meta"><span>WORKBOOK {String(unit.number).padStart(2, "0")}</span><i /><span>{unit.exercises.length} 道练习</span></div>
@@ -252,8 +260,8 @@ function WorkbookView({
           <button disabled={exerciseIndex === 0} onClick={() => setExerciseIndex((index) => index - 1)}><ArrowLeft /> 上一题</button>
           {exerciseIndex < unit.exercises.length - 1 ? (
             <button className="next-button" onClick={() => setExerciseIndex((index) => index + 1)}>下一题 <ArrowRight /></button>
-          ) : unit.number < workbookUnits.length ? (
-            <button className="next-button" onClick={() => onSelectUnit(workbookUnits[unit.number].id)}>下一单元 <ArrowRight /></button>
+          ) : unit.number < units.length ? (
+            <button className="next-button" onClick={() => onSelectUnit(units[unit.number].id)}>下一单元 <ArrowRight /></button>
           ) : null}
         </nav>
 
@@ -270,6 +278,8 @@ function WorkbookView({
 
 function FinalTrainingView({
   exercise,
+  exercises,
+  track,
   completed,
   codeByExercise,
   copied,
@@ -279,6 +289,8 @@ function FinalTrainingView({
   onCopy
 }: {
   exercise: Exercise;
+  exercises: Exercise[];
+  track: LearningTrack;
   completed: string[];
   codeByExercise: Record<string, string>;
   copied: string;
@@ -287,10 +299,10 @@ function FinalTrainingView({
   onSelectExercise: (id: string) => void;
   onCopy: (text: string, id: string) => void;
 }) {
-  const exerciseIndex = examExercises.findIndex((item) => item.id === exercise.id);
+  const exerciseIndex = exercises.findIndex((item) => item.id === exercise.id);
   const safeIndex = exerciseIndex >= 0 ? exerciseIndex : 0;
   const done = completed.length;
-  const percent = Math.round((done / examExerciseCount) * 100);
+  const percent = Math.round((done / exercises.length) * 100);
   const currentNumber = safeIndex + 1;
   const prompt = `${codexFramework}
 
@@ -309,16 +321,16 @@ ${codeByExercise[exercise.id] ?? exercise.starterCode}
   return (
     <>
       <div className="lesson-topbar">
-        <span><Trophy size={16} /> 初级期末综合训练</span>
-        <span>题库 {examExerciseCount} 题 · 当前第 {currentNumber} 题</span>
+        <span><Trophy size={16} /> {track.examLabel}</span>
+        <span>题库 {exercises.length} 题 · 当前第 {currentNumber} 题</span>
       </div>
       <section className="lesson-hero exam-hero">
         <div className="hero-meta"><span>FINAL TRAINING</span><i /><span>不标章节，只做任务</span></div>
         <h1>期末综合训练</h1>
-        <p>这里的题不会告诉你它属于哪一课。你只需要像真正写小程序一样，读懂任务、拆成步骤、写代码、运行、修正。做完这一栏，就可以更有底气进入进阶版。</p>
+        <p>这里的题不会告诉你它属于哪一课。你只需要像真正写小程序一样，读懂任务、拆成步骤、写代码、运行、修正。做完这一栏，就可以更有底气进入下一阶段。</p>
         <div className="hero-chips">
-          <span><Check size={15} /> 60 个独立任务</span>
-          <span><Sparkles size={15} /> 只考已学范围</span>
+          <span><Check size={15} /> {exercises.length} 个独立任务</span>
+          <span><Sparkles size={15} /> {track.shortTitle}已学范围</span>
           <span><Terminal size={15} /> 可运行检查</span>
         </div>
       </section>
@@ -327,14 +339,14 @@ ${codeByExercise[exercise.id] ?? exercise.starterCode}
         <section className="workbook-dashboard exam-dashboard">
           <div>
             <span className="section-kicker">期末进度</span>
-            <h2>{done} / {examExerciseCount} 完成</h2>
+            <h2>{done} / {exercises.length} 完成</h2>
           </div>
           <div className="workbook-progress exam-progress"><i style={{ width: `${percent}%` }} /></div>
           <p>建议当作“抽题考试”：不会就先看一层提示，仍然不会再问 Codex 解释思路，最后才看参考答案。</p>
         </section>
 
         <nav className="exercise-picker exam-picker" aria-label="期末训练题库">
-          {examExercises.map((item, index) => (
+          {exercises.map((item, index) => (
             <button
               key={item.id}
               className={`${index === safeIndex ? "active" : ""} ${completed.includes(item.id) ? "done" : ""}`}
@@ -347,7 +359,7 @@ ${codeByExercise[exercise.id] ?? exercise.starterCode}
         </nav>
 
         <div className="workbook-question-meta">
-          <span>综合任务 {currentNumber} / {examExerciseCount}</span>
+          <span>综合任务 {currentNumber} / {exercises.length}</span>
           <b className="kind-badge kind-综合">独立综合</b>
         </div>
 
@@ -374,16 +386,16 @@ ${codeByExercise[exercise.id] ?? exercise.starterCode}
         </section>
 
         <nav className="bottom-nav workbook-bottom-nav">
-          <button disabled={safeIndex === 0} onClick={() => onSelectExercise(examExercises[safeIndex - 1].id)}><ArrowLeft /> 上一题</button>
-          {safeIndex < examExercises.length - 1 && (
-            <button className="next-button" onClick={() => onSelectExercise(examExercises[safeIndex + 1].id)}>下一题 <ArrowRight /></button>
+          <button disabled={safeIndex === 0} onClick={() => onSelectExercise(exercises[safeIndex - 1].id)}><ArrowLeft /> 上一题</button>
+          {safeIndex < exercises.length - 1 && (
+            <button className="next-button" onClick={() => onSelectExercise(exercises[safeIndex + 1].id)}>下一题 <ArrowRight /></button>
           )}
         </nav>
 
-        {done === examExerciseCount && (
+        {done === exercises.length && (
           <section className="unit-complete exam-complete">
             <Trophy size={30} />
-            <div><span>期末完成</span><h2>可以准备进入进阶版了。</h2><p>如果你能不看答案完成大部分题，说明基础语法、调试节奏和向 Codex 提问的方式都已经站稳了。</p></div>
+            <div><span>期末完成</span><h2>可以准备进入下一阶段了。</h2><p>如果你能不看答案完成大部分题，说明这一阶段的语法、调试节奏和向 Codex 提问的方式都已经站稳了。</p></div>
           </section>
         )}
       </div>
@@ -393,6 +405,7 @@ ${codeByExercise[exercise.id] ?? exercise.starterCode}
 
 function App() {
   const [progress, setProgress] = useState<ProgressState>(loadProgress);
+  const [trackId, setTrackId] = useState<TrackId>(() => loadTrack(loadProgress()));
   const [mode, setMode] = useState<StudyMode>(loadMode);
   const [activeId, setActiveId] = useState(progress.lastLessonId);
   const [workbookUnitId, setWorkbookUnitId] = useState(progress.lastWorkbookUnit);
@@ -404,16 +417,18 @@ function App() {
   const [showReset, setShowReset] = useState(false);
   const { run, stop, status } = usePythonRunner();
 
-  const activeLesson = lessons.find((lesson) => lesson.id === activeId) ?? lessons[0];
-  const activeIndex = lessons.indexOf(activeLesson);
-  const completedCount = progress.completedLessons.length;
-  const percent = Math.round((completedCount / lessons.length) * 100);
-  const workbookUnit = workbookUnits.find((unit) => unit.id === workbookUnitId) ?? workbookUnits[0];
-  const workbookDone = progress.workbookCompleted.length;
-  const workbookPercent = Math.round((workbookDone / workbookExerciseCount) * 100);
-  const examExercise = examExercises.find((exercise) => exercise.id === examExerciseId) ?? examExercises[0];
-  const examDone = progress.examCompleted.length;
-  const examPercent = Math.round((examDone / examExerciseCount) * 100);
+  const track = getTrack(trackId);
+  const activeLesson = track.lessons.find((lesson) => lesson.id === activeId) ?? track.lessons[0];
+  const activeIndex = track.lessons.indexOf(activeLesson);
+  const completedCount = track.lessons.filter((lesson) => progress.completedLessons.includes(lesson.id)).length;
+  const percent = Math.round((completedCount / track.lessons.length) * 100);
+  const workbookUnit = track.workbookUnits.find((unit) => unit.id === workbookUnitId) ?? track.workbookUnits[0];
+  const workbookExercises = track.workbookUnits.flatMap((unit) => unit.exercises);
+  const workbookDone = workbookExercises.filter((exercise) => progress.workbookCompleted.includes(exercise.id)).length;
+  const workbookPercent = Math.round((workbookDone / workbookExercises.length) * 100);
+  const examExercise = track.examExercises.find((exercise) => exercise.id === examExerciseId) ?? track.examExercises[0];
+  const examDone = track.examExercises.filter((exercise) => progress.examCompleted.includes(exercise.id)).length;
+  const examPercent = Math.round((examDone / track.examExercises.length) * 100);
   const lessonExerciseDone = activeLesson.exercises.filter((item) => progress.completedExercises.includes(item.id)).length;
   const currentPercent = mode === "textbook" ? percent : mode === "workbook" ? workbookPercent : examPercent;
 
@@ -487,6 +502,23 @@ function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const switchTrack = (nextTrackId: TrackId) => {
+    const nextTrack = getTrack(nextTrackId);
+    setTrackId(nextTrackId);
+    setActiveId(nextTrack.lessons[0].id);
+    setWorkbookUnitId(nextTrack.workbookUnits[0].id);
+    setExamExerciseId(nextTrack.examExercises[0].id);
+    setProgress((current) => ({
+      ...current,
+      lastTrack: nextTrackId,
+      lastLessonId: nextTrack.lessons[0].id,
+      lastWorkbookUnit: nextTrack.workbookUnits[0].id,
+      lastExamExercise: nextTrack.examExercises[0].id
+    }));
+    setMobileMenu(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const updateWorkbookCode = (id: string, value: string) => {
     setProgress((current) => ({ ...current, workbookCode: { ...current.workbookCode, [id]: value } }));
   };
@@ -529,10 +561,11 @@ function App() {
   const resetProgress = () => {
     setProgress(defaultProgress);
     localStorage.setItem(MODE_KEY, "textbook");
+    setTrackId(defaultTrack.id);
     setMode("textbook");
-    setActiveId(lessons[0].id);
-    setWorkbookUnitId(workbookUnits[0].id);
-    setExamExerciseId(examExercises[0].id);
+    setActiveId(defaultTrack.lessons[0].id);
+    setWorkbookUnitId(defaultTrack.workbookUnits[0].id);
+    setExamExerciseId(defaultTrack.examExercises[0].id);
     setShowReset(false);
   };
 
@@ -540,15 +573,29 @@ function App() {
     <div className="app-shell">
       <header className="mobile-header">
         <button className="menu-button" onClick={() => setMobileMenu(true)} aria-label="打开课程目录"><Menu /></button>
-        <div className="mini-brand"><span>Py</span>代码起步营</div>
+        <div className="mini-brand"><span>Py</span>{track.shortTitle}起步营</div>
         <span className="mini-progress">{currentPercent}%</span>
       </header>
 
       <aside className={`sidebar ${mobileMenu ? "open" : ""}`}>
         <div className="brand">
           <div className="brand-mark">Py<span>+</span></div>
-          <div><strong>代码起步营</strong><span>Python × Codex</span></div>
+          <div><strong>代码起步营</strong><span>Python × Codex · {track.shortTitle}</span></div>
           <button className="close-menu" onClick={() => setMobileMenu(false)} aria-label="关闭课程目录"><X /></button>
+        </div>
+        <div className="track-switcher" role="tablist" aria-label="学习路线">
+          {learningTracks.map((item) => (
+            <button
+              key={item.id}
+              role="tab"
+              aria-selected={track.id === item.id}
+              className={track.id === item.id ? "active" : ""}
+              onClick={() => switchTrack(item.id)}
+            >
+              <span>{item.shortTitle}</span>
+              <small>{item.levelLabel}</small>
+            </button>
+          ))}
         </div>
         <div className="book-switcher" role="tablist" aria-label="学习板块">
           <button role="tab" aria-selected={mode === "textbook"} className={mode === "textbook" ? "active" : ""} onClick={() => switchMode("textbook")}><BookOpen size={15} /> 教材</button>
@@ -556,16 +603,16 @@ function App() {
           <button role="tab" aria-selected={mode === "exam"} className={mode === "exam" ? "active" : ""} onClick={() => switchMode("exam")}><Trophy size={15} /> 期末训练</button>
         </div>
         <div className="course-progress">
-          <div><span>{mode === "textbook" ? "初级教材 · 8 课" : mode === "workbook" ? `配套练习 · ${workbookExerciseCount} 题` : `期末训练 · ${examExerciseCount} 题`}</span><strong>{currentPercent}%</strong></div>
+          <div><span>{mode === "textbook" ? `${track.textbookLabel} · ${track.lessons.length} 课` : mode === "workbook" ? `${track.workbookLabel} · ${workbookExercises.length} 题` : `${track.examLabel} · ${track.examExercises.length} 题`}</span><strong>{currentPercent}%</strong></div>
           <div className="progress-track"><i style={{ width: `${currentPercent}%` }} /></div>
           <p>{mode === "textbook"
-            ? (completedCount === 0 ? "从第一行代码开始，慢慢来。" : `已完成 ${completedCount} 课，继续保持好奇。`)
+            ? (completedCount === 0 ? track.description : `已完成 ${completedCount} 课，继续保持好奇。`)
             : mode === "workbook"
               ? (workbookDone === 0 ? "不赶进度，把每一个小动作练稳。" : `已完成 ${workbookDone} 题，坚持独立思考。`)
               : (examDone === 0 ? "像期末抽题一样练，不看章节提示。" : `已完成 ${examDone} 道综合题，越来越稳。`)}</p>
         </div>
         <nav className="lesson-nav" aria-label="课程目录">
-          {mode === "textbook" ? lessons.map((lesson) => {
+          {mode === "textbook" ? track.lessons.map((lesson) => {
             const isDone = progress.completedLessons.includes(lesson.id);
             return (
               <button key={lesson.id} className={lesson.id === activeId ? "active" : ""} onClick={() => selectLesson(lesson.id)}>
@@ -573,7 +620,7 @@ function App() {
                 <span><small>{lesson.eyebrow}</small>{lesson.title}</span>
               </button>
             );
-          }) : mode === "workbook" ? workbookUnits.map((unit) => {
+          }) : mode === "workbook" ? track.workbookUnits.map((unit) => {
             const done = unit.exercises.filter((item) => progress.workbookCompleted.includes(item.id)).length;
             const isDone = done === unit.exercises.length;
             return (
@@ -582,7 +629,7 @@ function App() {
                 <span><small>{done} / {unit.exercises.length} 已完成</small>{unit.title}</span>
               </button>
             );
-          }) : examExercises.map((item, index) => {
+          }) : track.examExercises.map((item, index) => {
             const isDone = progress.examCompleted.includes(item.id);
             return (
               <button key={item.id} className={item.id === examExerciseId ? "active" : ""} onClick={() => selectExamExercise(item.id)}>
@@ -603,6 +650,8 @@ function App() {
         {mode === "workbook" ? (
           <WorkbookView
             unit={workbookUnit}
+            units={track.workbookUnits}
+            track={track}
             completed={progress.workbookCompleted}
             codeByExercise={progress.workbookCode}
             onCodeChange={updateWorkbookCode}
@@ -612,6 +661,8 @@ function App() {
         ) : mode === "exam" ? (
           <FinalTrainingView
             exercise={examExercise}
+            exercises={track.examExercises}
+            track={track}
             completed={progress.examCompleted}
             codeByExercise={progress.examCode}
             copied={copied}
@@ -623,8 +674,8 @@ function App() {
         ) : (
         <>
         <div className="lesson-topbar">
-          <span><BookOpen size={16} /> 初级学习路径</span>
-          <span>第 {activeLesson.number} / {lessons.length} 课</span>
+          <span><BookOpen size={16} /> {track.title}</span>
+          <span>第 {activeLesson.number} / {track.lessons.length} 课</span>
         </div>
 
         <section className="lesson-hero">
@@ -632,7 +683,7 @@ function App() {
           <h1>{activeLesson.title}</h1>
           <p>{activeLesson.goal}</p>
           <div className="hero-chips">
-            <span><GraduationCap size={16} /> 零基础友好</span>
+            <span><GraduationCap size={16} /> {track.heroBadge}</span>
             <span><Terminal size={16} /> 边学边运行</span>
           </div>
         </section>
@@ -706,17 +757,17 @@ function App() {
           {activeLesson.number === 8 && (
             <section className="graduation-card">
               <GraduationCap size={34} />
-              <span>初级路线完成</span>
-              <h2>你已经不再是“完全不懂代码”的人了。</h2>
-              <p>你能读懂基础 Python、拆分一个小问题、运行并检查代码，也知道怎样把上下文交给 Codex。下一步可以继续学习字典、文件、模块和真实自动化。</p>
+              <span>{track.title}完成</span>
+              <h2>{track.graduationTitle}</h2>
+              <p>{track.graduationText}</p>
               <button onClick={() => copyText(codexFramework, "final")}><Clipboard size={16} /> {copied === "final" ? "已复制" : "收藏通用 Codex 模板"}</button>
             </section>
           )}
 
           <nav className="bottom-nav">
-            <button disabled={activeIndex === 0} onClick={() => selectLesson(lessons[activeIndex - 1].id)}><ArrowLeft /> 上一课</button>
-            {activeIndex < lessons.length - 1 && (
-              <button className="next-button" onClick={() => selectLesson(lessons[activeIndex + 1].id)}>下一课：{lessons[activeIndex + 1].title} <ArrowRight /></button>
+            <button disabled={activeIndex === 0} onClick={() => selectLesson(track.lessons[activeIndex - 1].id)}><ArrowLeft /> 上一课</button>
+            {activeIndex < track.lessons.length - 1 && (
+              <button className="next-button" onClick={() => selectLesson(track.lessons[activeIndex + 1].id)}>下一课：{track.lessons[activeIndex + 1].title} <ArrowRight /></button>
             )}
           </nav>
         </div>

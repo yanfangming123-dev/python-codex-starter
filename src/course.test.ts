@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { codexFramework, lessons } from "./course";
 import { examExerciseCount, examExercises } from "./exam";
+import { intermediateExamExerciseCount } from "./intermediateExam";
+import { intermediateWorkbookExerciseCount } from "./intermediateWorkbook";
+import { learningTracks } from "./tracks";
 import { workbookExerciseCount, workbookUnits } from "./workbook";
 
 describe("course data", () => {
@@ -46,5 +49,14 @@ describe("course data", () => {
     expect(new Set(examExercises.map((item) => item.id)).size).toBe(examExercises.length);
     expect(examExercises.every((item) => item.kind === "综合")).toBe(true);
     expect(examExercises.every((item) => item.title.length > 0 && item.task.length > 0)).toBe(true);
+  });
+
+  it("adds an intermediate track with the same three-part structure", () => {
+    expect(learningTracks.map((track) => track.id)).toEqual(["beginner", "intermediate"]);
+    const intermediate = learningTracks.find((track) => track.id === "intermediate");
+    expect(intermediate?.lessons).toHaveLength(8);
+    expect(intermediate?.workbookUnits).toHaveLength(8);
+    expect(intermediateWorkbookExerciseCount).toBe(48);
+    expect(intermediateExamExerciseCount).toBe(32);
   });
 });
