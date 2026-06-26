@@ -25,6 +25,8 @@ export interface WorkbookUnit {
   exercises: Exercise[];
 }
 
+export type StudyMode = "textbook" | "workbook" | "exam";
+
 export interface Lesson {
   id: string;
   number: number;
@@ -49,7 +51,10 @@ export interface ProgressState {
   workbookCompleted: string[];
   workbookCode: Record<string, string>;
   lastWorkbookUnit: string;
-  lastMode: "textbook" | "workbook";
+  examCompleted: string[];
+  examCode: Record<string, string>;
+  lastExamExercise: string;
+  lastMode: StudyMode;
 }
 
 export interface RunResult {

@@ -35,7 +35,7 @@ button { cursor: pointer; }
 .brand strong { font-size: 16px; letter-spacing: .02em; }
 .brand > div:nth-child(2) span { font-size: 11px; margin-top: 3px; color: var(--muted); letter-spacing: .09em; text-transform: uppercase; }
 .close-menu { display: none; border: 0; background: transparent; margin-left: auto; color: var(--muted); }
-.book-switcher { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin: 14px 18px 0; padding: 4px; border-radius: 10px; background: #e3e1d9; }
+.book-switcher { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; margin: 14px 18px 0; padding: 4px; border-radius: 10px; background: #e3e1d9; }
 .book-switcher button { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px; color: #74776f; border: 0; border-radius: 7px; background: transparent; font-size: 11px; font-weight: 700; }
 .book-switcher button.active { color: var(--green); background: var(--paper); box-shadow: 0 2px 8px #2831280d; }
 .course-progress { margin: 18px 18px 12px; padding: 16px; background: var(--paper); border: 1px solid var(--line); border-radius: 14px; }
@@ -65,6 +65,8 @@ button { cursor: pointer; }
 .lesson-hero::after { content: ""; position: absolute; width: 310px; height: 310px; border: 1px solid #ffffff1c; border-radius: 50%; right: -70px; top: -145px; box-shadow: 0 0 0 50px #ffffff08, 0 0 0 100px #ffffff05; }
 .workbook-hero { background: #604934; }
 .workbook-hero::after { border-radius: 18px; transform: rotate(18deg); border-color: #ffffff16; box-shadow: 0 0 0 40px #ffffff08, 0 0 0 80px #ffffff04; }
+.exam-hero { background: #263852; }
+.exam-hero::after { width: 360px; height: 180px; border-radius: 999px; transform: rotate(-20deg); border-color: #ffffff18; box-shadow: 0 0 0 44px #ffffff08, 0 0 0 88px #ffffff04; }
 .hero-meta { display: flex; align-items: center; gap: 12px; color: #d0ded7; font-family: "DM Mono"; font-size: 11px; letter-spacing: .08em; }
 .hero-meta i { width: 28px; height: 1px; background: #ffffff50; }
 .lesson-hero h1 { margin: 18px 0 12px; max-width: 650px; font-size: clamp(36px, 5vw, 56px); line-height: 1.1; letter-spacing: -.04em; }
@@ -164,11 +166,17 @@ button { cursor: pointer; }
 .workbook-dashboard p { grid-column: 1 / -1; margin: 3px 0 0; color: var(--muted); font-size: 11px; line-height: 1.65; }
 .workbook-progress { height: 8px; overflow: hidden; border-radius: 99px; background: #e8dfd4; }
 .workbook-progress i { display: block; height: 100%; border-radius: inherit; background: #8b6545; transition: width .3s; }
+.exam-dashboard { border-color: #ccd6e4; background: #f5f8fc; }
+.exam-progress { background: #dbe4ef; }
+.exam-progress i { background: #263852; }
 .exercise-picker { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 30px; }
 .exercise-picker button { width: 36px; height: 36px; display: grid; place-items: center; color: #7a6b5e; border: 1px solid #d9d1c9; border-radius: 9px; background: var(--paper); font: 11px "DM Mono"; }
 .exercise-picker button:hover { border-color: #a98c72; }
 .exercise-picker button.active { color: white; border-color: #604934; background: #604934; box-shadow: 0 5px 14px #6049342a; }
 .exercise-picker button.done:not(.active) { color: var(--green); border-color: #a9c8b7; background: var(--green-soft); }
+.exam-picker button { width: 40px; border-color: #d5deea; color: #64738a; }
+.exam-picker button:hover { border-color: #263852; }
+.exam-picker button.active { border-color: #263852; background: #263852; box-shadow: 0 5px 14px #2638522d; }
 .workbook-question-meta { display: flex; align-items: center; justify-content: space-between; margin: 0 3px 10px; color: var(--muted); font: 10px "DM Mono"; }
 .kind-badge { padding: 5px 9px; border-radius: 99px; color: #76583e; background: #eee4d9; font: 10px "Noto Sans SC"; }
 .kind-改错 { color: #98503a; background: #f7e5df; }
@@ -179,6 +187,10 @@ button { cursor: pointer; }
 .unit-complete span { font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
 .unit-complete h2 { margin: 3px 0 5px; font-size: 19px; }
 .unit-complete p { margin: 0; color: #577064; font-size: 11px; line-height: 1.6; }
+.exam-codex { margin-top: 26px; margin-bottom: 26px; background: #eef3fa; border-color: #d4dfec; }
+.exam-codex .codex-icon { background: #263852; }
+.exam-complete { color: #263852; border-color: #c5d2e2; background: #edf4fb; }
+.exam-complete p { color: #5b6b7f; }
 
 .modal-backdrop { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 20px; background: #18201c99; backdrop-filter: blur(3px); }
 .modal { width: min(400px, 100%); padding: 30px; text-align: center; border-radius: 18px; background: var(--paper); box-shadow: 0 30px 80px #0003; }
@@ -226,4 +238,5 @@ button { cursor: pointer; }
   .workbook-dashboard p { grid-column: auto; }
   .exercise-picker { gap: 6px; }
   .exercise-picker button { width: 33px; height: 33px; }
+  .exam-picker button { width: 34px; }
 }

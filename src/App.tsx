@@ -2,11 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft, ArrowRight, BookOpen, Check, CheckCircle2, Dumbbell,
   Clipboard, Code2, GraduationCap, Lightbulb, Menu, Play, RotateCcw,
-  Sparkles, Square, Terminal, Trash2, X
+  Sparkles, Square, Terminal, Trash2, Trophy, X
 } from "lucide-react";
 import { codexFramework, lessons } from "./course";
+import { examExerciseCount, examExercises } from "./exam";
 import { workbookExerciseCount, workbookUnits } from "./workbook";
-import type { Exercise, ProgressState, RunResult, ValidationRule, WorkbookUnit } from "./types";
+import type { Exercise, ProgressState, RunResult, StudyMode, ValidationRule, WorkbookUnit } from "./types";
 import { usePythonRunner } from "./usePythonRunner";
 
 const STORAGE_KEY = "python-codex-progress-v1";
@@ -19,6 +20,9 @@ const defaultProgress: ProgressState = {
   workbookCompleted: [],
   workbookCode: {},
   lastWorkbookUnit: workbookUnits[0].id,
+  examCompleted: [],
+  examCode: {},
+  lastExamExercise: examExercises[0].id,
   lastMode: "textbook"
 };
 
@@ -31,8 +35,9 @@ function loadProgress(): ProgressState {
   }
 }
 
-function loadMode(): "textbook" | "workbook" {
-  return localStorage.getItem(MODE_KEY) === "workbook" ? "workbook" : "textbook";
+function loadMode(): StudyMode {
+  const mode = localStorage.getItem(MODE_KEY);
+  return mode === "workbook" || mode === "exam" ? mode : "textbook";
 }
 
 function validate(rule: ValidationRule, code: string, output: string) {
@@ -263,11 +268,135 @@ function WorkbookView({
   );
 }
 
+function FinalTrainingView({
+  exercise,
+  completed,
+  codeByExercise,
+  copied,
+  onCodeChange,
+  onComplete,
+  onSelectExercise,
+  onCopy
+}: {
+  exercise: Exercise;
+  completed: string[];
+  codeByExercise: Record<string, string>;
+  copied: string;
+  onCodeChange: (id: string, code: string) => void;
+  onComplete: (id: string) => void;
+  onSelectExercise: (id: string) => void;
+  onCopy: (text: string, id: string) => void;
+}) {
+  const exerciseIndex = examExercises.findIndex((item) => item.id === exercise.id);
+  const safeIndex = exerciseIndex >= 0 ? exerciseIndex : 0;
+  const done = completed.length;
+  const percent = Math.round((done / examExerciseCount) * 100);
+  const currentNumber = safeIndex + 1;
+  const prompt = `${codexFramework}
+
+【当前任务】
+${exercise.title}
+
+【题目要求】
+${exercise.task}
+
+【我的代码】
+${codeByExercise[exercise.id] ?? exercise.starterCode}
+
+【给 Codex 的具体请求】
+请先不要直接给完整答案。请帮我判断我的思路卡在哪里，给我 1-2 个提示；如果我明确说“给我答案”，你再给完整参考代码。`;
+
+  return (
+    <>
+      <div className="lesson-topbar">
+        <span><Trophy size={16} /> 初级期末综合训练</span>
+        <span>题库 {examExerciseCount} 题 · 当前第 {currentNumber} 题</span>
+      </div>
+      <section className="lesson-hero exam-hero">
+        <div className="hero-meta"><span>FINAL TRAINING</span><i /><span>不标章节，只做任务</span></div>
+        <h1>期末综合训练</h1>
+        <p>这里的题不会告诉你它属于哪一课。你只需要像真正写小程序一样，读懂任务、拆成步骤、写代码、运行、修正。做完这一栏，就可以更有底气进入进阶版。</p>
+        <div className="hero-chips">
+          <span><Check size={15} /> 60 个独立任务</span>
+          <span><Sparkles size={15} /> 只考已学范围</span>
+          <span><Terminal size={15} /> 可运行检查</span>
+        </div>
+      </section>
+
+      <div className="content-column workbook-column">
+        <section className="workbook-dashboard exam-dashboard">
+          <div>
+            <span className="section-kicker">期末进度</span>
+            <h2>{done} / {examExerciseCount} 完成</h2>
+          </div>
+          <div className="workbook-progress exam-progress"><i style={{ width: `${percent}%` }} /></div>
+          <p>建议当作“抽题考试”：不会就先看一层提示，仍然不会再问 Codex 解释思路，最后才看参考答案。</p>
+        </section>
+
+        <nav className="exercise-picker exam-picker" aria-label="期末训练题库">
+          {examExercises.map((item, index) => (
+            <button
+              key={item.id}
+              className={`${index === safeIndex ? "active" : ""} ${completed.includes(item.id) ? "done" : ""}`}
+              onClick={() => onSelectExercise(item.id)}
+              aria-label={`期末训练第 ${index + 1} 题`}
+            >
+              {completed.includes(item.id) ? <Check size={14} /> : index + 1}
+            </button>
+          ))}
+        </nav>
+
+        <div className="workbook-question-meta">
+          <span>综合任务 {currentNumber} / {examExerciseCount}</span>
+          <b className="kind-badge kind-综合">独立综合</b>
+        </div>
+
+        <ExerciseCard
+          key={exercise.id}
+          exercise={exercise}
+          code={codeByExercise[exercise.id] ?? exercise.starterCode}
+          setCode={(value) => onCodeChange(exercise.id, value)}
+          completed={completed.includes(exercise.id)}
+          toggleComplete={() => onComplete(exercise.id)}
+        />
+
+        <section className="codex-section exam-codex">
+          <div className="codex-icon"><Sparkles /></div>
+          <div className="codex-copy">
+            <span className="section-kicker">考试式求助</span>
+            <h2>先让 Codex 当教练，不当代写员</h2>
+            <p>这套题的目的不是刷答案，而是练习自己定位问题。复制下面模板时，它会带上当前题目和你的代码。</p>
+            <div className="prompt-card">
+              <div><span>当前题目求助模板</span><button onClick={() => onCopy(prompt, "exam")}><Clipboard size={15} /> {copied === "exam" ? "已复制" : "复制给 Codex"}</button></div>
+              <pre>{prompt}</pre>
+            </div>
+          </div>
+        </section>
+
+        <nav className="bottom-nav workbook-bottom-nav">
+          <button disabled={safeIndex === 0} onClick={() => onSelectExercise(examExercises[safeIndex - 1].id)}><ArrowLeft /> 上一题</button>
+          {safeIndex < examExercises.length - 1 && (
+            <button className="next-button" onClick={() => onSelectExercise(examExercises[safeIndex + 1].id)}>下一题 <ArrowRight /></button>
+          )}
+        </nav>
+
+        {done === examExerciseCount && (
+          <section className="unit-complete exam-complete">
+            <Trophy size={30} />
+            <div><span>期末完成</span><h2>可以准备进入进阶版了。</h2><p>如果你能不看答案完成大部分题，说明基础语法、调试节奏和向 Codex 提问的方式都已经站稳了。</p></div>
+          </section>
+        )}
+      </div>
+    </>
+  );
+}
+
 function App() {
   const [progress, setProgress] = useState<ProgressState>(loadProgress);
-  const [mode, setMode] = useState<"textbook" | "workbook">(loadMode);
+  const [mode, setMode] = useState<StudyMode>(loadMode);
   const [activeId, setActiveId] = useState(progress.lastLessonId);
   const [workbookUnitId, setWorkbookUnitId] = useState(progress.lastWorkbookUnit);
+  const [examExerciseId, setExamExerciseId] = useState(progress.lastExamExercise);
   const [mobileMenu, setMobileMenu] = useState(false);
   const [exampleCode, setExampleCode] = useState("");
   const [exampleResult, setExampleResult] = useState<RunResult | null>(null);
@@ -282,7 +411,11 @@ function App() {
   const workbookUnit = workbookUnits.find((unit) => unit.id === workbookUnitId) ?? workbookUnits[0];
   const workbookDone = progress.workbookCompleted.length;
   const workbookPercent = Math.round((workbookDone / workbookExerciseCount) * 100);
+  const examExercise = examExercises.find((exercise) => exercise.id === examExerciseId) ?? examExercises[0];
+  const examDone = progress.examCompleted.length;
+  const examPercent = Math.round((examDone / examExerciseCount) * 100);
   const lessonExerciseDone = activeLesson.exercises.filter((item) => progress.completedExercises.includes(item.id)).length;
+  const currentPercent = mode === "textbook" ? percent : mode === "workbook" ? workbookPercent : examPercent;
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
@@ -339,7 +472,14 @@ function App() {
     setMobileMenu(false);
   };
 
-  const switchMode = (nextMode: "textbook" | "workbook") => {
+  const selectExamExercise = (id: string) => {
+    setExamExerciseId(id);
+    setProgress((current) => ({ ...current, lastExamExercise: id }));
+    setMobileMenu(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const switchMode = (nextMode: StudyMode) => {
     setMode(nextMode);
     localStorage.setItem(MODE_KEY, nextMode);
     setProgress((current) => ({ ...current, lastMode: nextMode }));
@@ -357,6 +497,19 @@ function App() {
       workbookCompleted: current.workbookCompleted.includes(id)
         ? current.workbookCompleted.filter((item) => item !== id)
         : [...current.workbookCompleted, id]
+    }));
+  };
+
+  const updateExamCode = (id: string, value: string) => {
+    setProgress((current) => ({ ...current, examCode: { ...current.examCode, [id]: value } }));
+  };
+
+  const toggleExamComplete = (id: string) => {
+    setProgress((current) => ({
+      ...current,
+      examCompleted: current.examCompleted.includes(id)
+        ? current.examCompleted.filter((item) => item !== id)
+        : [...current.examCompleted, id]
     }));
   };
 
@@ -379,6 +532,7 @@ function App() {
     setMode("textbook");
     setActiveId(lessons[0].id);
     setWorkbookUnitId(workbookUnits[0].id);
+    setExamExerciseId(examExercises[0].id);
     setShowReset(false);
   };
 
@@ -387,7 +541,7 @@ function App() {
       <header className="mobile-header">
         <button className="menu-button" onClick={() => setMobileMenu(true)} aria-label="打开课程目录"><Menu /></button>
         <div className="mini-brand"><span>Py</span>代码起步营</div>
-        <span className="mini-progress">{mode === "textbook" ? percent : workbookPercent}%</span>
+        <span className="mini-progress">{currentPercent}%</span>
       </header>
 
       <aside className={`sidebar ${mobileMenu ? "open" : ""}`}>
@@ -396,16 +550,19 @@ function App() {
           <div><strong>代码起步营</strong><span>Python × Codex</span></div>
           <button className="close-menu" onClick={() => setMobileMenu(false)} aria-label="关闭课程目录"><X /></button>
         </div>
-        <div className="book-switcher" role="tablist" aria-label="教材与练习册">
+        <div className="book-switcher" role="tablist" aria-label="学习板块">
           <button role="tab" aria-selected={mode === "textbook"} className={mode === "textbook" ? "active" : ""} onClick={() => switchMode("textbook")}><BookOpen size={15} /> 教材</button>
           <button role="tab" aria-selected={mode === "workbook"} className={mode === "workbook" ? "active" : ""} onClick={() => switchMode("workbook")}><Dumbbell size={15} /> 练习册</button>
+          <button role="tab" aria-selected={mode === "exam"} className={mode === "exam" ? "active" : ""} onClick={() => switchMode("exam")}><Trophy size={15} /> 期末训练</button>
         </div>
         <div className="course-progress">
-          <div><span>{mode === "textbook" ? "初级教材 · 8 课" : `配套练习 · ${workbookExerciseCount} 题`}</span><strong>{mode === "textbook" ? percent : workbookPercent}%</strong></div>
-          <div className="progress-track"><i style={{ width: `${mode === "textbook" ? percent : workbookPercent}%` }} /></div>
+          <div><span>{mode === "textbook" ? "初级教材 · 8 课" : mode === "workbook" ? `配套练习 · ${workbookExerciseCount} 题` : `期末训练 · ${examExerciseCount} 题`}</span><strong>{currentPercent}%</strong></div>
+          <div className="progress-track"><i style={{ width: `${currentPercent}%` }} /></div>
           <p>{mode === "textbook"
             ? (completedCount === 0 ? "从第一行代码开始，慢慢来。" : `已完成 ${completedCount} 课，继续保持好奇。`)
-            : (workbookDone === 0 ? "不赶进度，把每一个小动作练稳。" : `已完成 ${workbookDone} 题，坚持独立思考。`)}</p>
+            : mode === "workbook"
+              ? (workbookDone === 0 ? "不赶进度，把每一个小动作练稳。" : `已完成 ${workbookDone} 题，坚持独立思考。`)
+              : (examDone === 0 ? "像期末抽题一样练，不看章节提示。" : `已完成 ${examDone} 道综合题，越来越稳。`)}</p>
         </div>
         <nav className="lesson-nav" aria-label="课程目录">
           {mode === "textbook" ? lessons.map((lesson) => {
@@ -416,13 +573,21 @@ function App() {
                 <span><small>{lesson.eyebrow}</small>{lesson.title}</span>
               </button>
             );
-          }) : workbookUnits.map((unit) => {
+          }) : mode === "workbook" ? workbookUnits.map((unit) => {
             const done = unit.exercises.filter((item) => progress.workbookCompleted.includes(item.id)).length;
             const isDone = done === unit.exercises.length;
             return (
               <button key={unit.id} className={unit.id === workbookUnitId ? "active" : ""} onClick={() => selectWorkbookUnit(unit.id)}>
                 <span className={`lesson-dot ${isDone ? "done" : ""}`}>{isDone ? <Check size={14} /> : unit.number}</span>
                 <span><small>{done} / {unit.exercises.length} 已完成</small>{unit.title}</span>
+              </button>
+            );
+          }) : examExercises.map((item, index) => {
+            const isDone = progress.examCompleted.includes(item.id);
+            return (
+              <button key={item.id} className={item.id === examExerciseId ? "active" : ""} onClick={() => selectExamExercise(item.id)}>
+                <span className={`lesson-dot ${isDone ? "done" : ""}`}>{isDone ? <Check size={14} /> : index + 1}</span>
+                <span><small>{isDone ? "已完成" : "待挑战"}</small>综合任务 {index + 1}</span>
               </button>
             );
           })}
@@ -443,6 +608,17 @@ function App() {
             onCodeChange={updateWorkbookCode}
             onComplete={toggleWorkbookComplete}
             onSelectUnit={selectWorkbookUnit}
+          />
+        ) : mode === "exam" ? (
+          <FinalTrainingView
+            exercise={examExercise}
+            completed={progress.examCompleted}
+            codeByExercise={progress.examCode}
+            copied={copied}
+            onCodeChange={updateExamCode}
+            onComplete={toggleExamComplete}
+            onSelectExercise={selectExamExercise}
+            onCopy={copyText}
           />
         ) : (
         <>
@@ -553,7 +729,7 @@ function App() {
           <div className="modal" role="dialog" aria-modal="true" onClick={(event) => event.stopPropagation()}>
             <div className="modal-icon"><Trash2 /></div>
             <h2>重置全部学习进度？</h2>
-            <p>教材与练习册的完成状态、你写过的代码都会被清除。这个操作无法撤销。</p>
+            <p>教材、练习册与期末训练的完成状态、你写过的代码都会被清除。这个操作无法撤销。</p>
             <div><button className="secondary-button" onClick={() => setShowReset(false)}>先不重置</button><button className="danger-button" onClick={resetProgress}>确认重置</button></div>
           </div>
         </div>

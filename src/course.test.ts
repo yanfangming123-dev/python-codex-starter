@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { codexFramework, lessons } from "./course";
+import { examExerciseCount, examExercises } from "./exam";
 import { workbookExerciseCount, workbookUnits } from "./workbook";
 
 describe("course data", () => {
@@ -38,5 +39,12 @@ describe("course data", () => {
     const exercises = workbookUnits.flatMap((unit) => unit.exercises);
     expect(new Set(exercises.map((item) => item.id)).size).toBe(exercises.length);
     expect(new Set(exercises.map((item) => item.kind))).toEqual(new Set(["模仿", "补全", "改错", "独立", "综合"]));
+  });
+
+  it("adds a large chapterless final training bank", () => {
+    expect(examExerciseCount).toBe(60);
+    expect(new Set(examExercises.map((item) => item.id)).size).toBe(examExercises.length);
+    expect(examExercises.every((item) => item.kind === "综合")).toBe(true);
+    expect(examExercises.every((item) => item.title.length > 0 && item.task.length > 0)).toBe(true);
   });
 });
