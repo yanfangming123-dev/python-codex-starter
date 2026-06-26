@@ -56,7 +56,7 @@ describe("course data", () => {
     const intermediate = learningTracks.find((track) => track.id === "intermediate");
     expect(intermediate?.lessons).toHaveLength(8);
     expect(intermediate?.workbookUnits).toHaveLength(8);
-    expect(intermediateWorkbookExerciseCount).toBe(48);
-    expect(intermediateExamExerciseCount).toBe(32);
+    expect(intermediateWorkbookExerciseCount).toBe(88);
+    expect(intermediateExamExerciseCount).toBe(60);
   });
 });

@@ -178,7 +178,186 @@ def report():
     return f"总计{total}分钟"
 add_record("周一", "字典", 30)
 add_record("周二", "文件", 40)
-print(report())`, both(["总计70分钟"], ["def", "append", "return"]))
+print(report())`, both(["总计70分钟"], ["def", "append", "return"])),
+  task("33", "购物清单合计", "items 中有 price 和 count，输出总价 26。", `items = [{"name": "笔", "price": 3, "count": 2}, {"name": "本", "price": 10, "count": 2}]`, "输出26。", `items = [{"name": "笔", "price": 3, "count": 2}, {"name": "本", "price": 10, "count": 2}]
+total = 0
+for item in items:
+    total += item["price"] * item["count"]
+print(total)`, both(["26"], ["for", "*"])),
+  task("34", "缺失城市补全", "users 中有些没有 city，输出 name-city，缺失用未知。", `users = [{"name": "A", "city": "上海"}, {"name": "B"}]`, "输出A-上海和B-未知。", `users = [{"name": "A", "city": "上海"}, {"name": "B"}]
+for user in users:
+    print(f"{user['name']}-{user.get('city', '未知')}")`, both(["A-上海", "B-未知"], ["get"])),
+  task("35", "任务标题文本", "把 tasks 的 title 连接成用逗号分隔的文本。", `tasks = [{"title": "阅读"}, {"title": "练习"}, {"title": "复盘"}]`, "输出阅读,练习,复盘。", `tasks = [{"title": "阅读"}, {"title": "练习"}, {"title": "复盘"}]
+titles = [task["title"] for task in tasks]
+print(",".join(titles))`, both(["阅读,练习,复盘"], ["join"])),
+  task("36", "安全整数求和", "raw 中混有空格、空项和坏数据，只累加有效数字。", `raw = [" 5", "", "x", "15"]`, "输出20。", `raw = [" 5", "", "x", "15"]
+total = 0
+for item in raw:
+    try:
+        total += int(item.strip())
+    except ValueError:
+        pass
+print(total)`, both(["20"], ["try", "strip"])),
+  task("37", "按完成状态分组", "统计 tasks 中 done 和 todo 的数量。", `tasks = [{"done": True}, {"done": False}, {"done": True}, {"done": False}]`, "输出done=2和todo=2。", `tasks = [{"done": True}, {"done": False}, {"done": True}, {"done": False}]
+done = 0
+todo = 0
+for task in tasks:
+    if task["done"]:
+        done += 1
+    else:
+        todo += 1
+print(f"done={done}")
+print(f"todo={todo}")`, both(["done=2", "todo=2"], ["else"])),
+  task("38", "最长标题", "输出 tasks 中标题最长的一项。", `tasks = [{"title": "读"}, {"title": "练Python"}, {"title": "复盘"}]`, "输出练Python。", `tasks = [{"title": "读"}, {"title": "练Python"}, {"title": "复盘"}]
+longest = tasks[0]
+for task in tasks:
+    if len(task["title"]) > len(longest["title"]):
+        longest = task
+print(longest["title"])`, both(["练Python"], ["len"])),
+  task("39", "记录转多行报告", "把 records 转成“周一：字典 30分钟”这样的多行文本。", `records = [{"day": "周一", "topic": "字典", "minutes": 30}, {"day": "周二", "topic": "文件", "minutes": 40}]`, "输出两行报告。", `records = [{"day": "周一", "topic": "字典", "minutes": 30}, {"day": "周二", "topic": "文件", "minutes": 40}]
+lines = []
+for record in records:
+    lines.append(f"{record['day']}：{record['topic']} {record['minutes']}分钟")
+print("\\n".join(lines))`, both(["周一：字典 30分钟", "周二：文件 40分钟"], ["join"])),
+  task("40", "CSV 文本清洗", "从多行 CSV 文本中统计 minutes 总和。", `text = "周一,字典,30\\n周二,文件,40\\n坏行"`, "输出70。", `text = "周一,字典,30\\n周二,文件,40\\n坏行"
+total = 0
+for line in text.split("\\n"):
+    try:
+        day, topic, minutes = line.split(",")
+        total += int(minutes)
+    except ValueError:
+        pass
+print(total)`, both(["70"], ["split", "try"])),
+  task("41", "分数等级报告", "students 中 score>=90 为优秀，否则为继续练习。", `students = [{"name": "A", "score": 95}, {"name": "B", "score": 70}]`, "输出A：优秀和B：继续练习。", `students = [{"name": "A", "score": 95}, {"name": "B", "score": 70}]
+for student in students:
+    level = "优秀" if student["score"] >= 90 else "继续练习"
+    print(f"{student['name']}：{level}")`, both(["A：优秀", "B：继续练习"], ["if"])),
+  task("42", "主题去重", "从 records 中输出不重复主题列表。", `records = [{"topic": "字典"}, {"topic": "文件"}, {"topic": "字典"}, {"topic": "异常"}]`, "输出字典、文件、异常。", `records = [{"topic": "字典"}, {"topic": "文件"}, {"topic": "字典"}, {"topic": "异常"}]
+topics = []
+for record in records:
+    if record["topic"] not in topics:
+        topics.append(record["topic"])
+print(topics)`, both(["字典", "文件", "异常"], ["not in"])),
+  task("43", "函数化筛选", "定义 filter_done(tasks)，返回已完成任务。", `tasks = [{"title": "A", "done": True}, {"title": "B", "done": False}]`, "输出A。", `tasks = [{"title": "A", "done": True}, {"title": "B", "done": False}]
+def filter_done(tasks):
+    result = []
+    for task in tasks:
+        if task["done"]:
+            result.append(task)
+    return result
+print(filter_done(tasks))`, both(["A"], ["def", "return"])),
+  task("44", "函数化安全转换", "定义 to_int(text)，失败时返回 None。", "", "输出12和None。", `def to_int(text):
+    try:
+        return int(text)
+    except ValueError:
+        return None
+print(to_int("12"))
+print(to_int("x"))`, both(["12", "None"], ["try", "return"])),
+  task("45", "按主题平均", "计算 topic 为 字典 的平均分钟数。", `records = [{"topic": "字典", "minutes": 20}, {"topic": "文件", "minutes": 50}, {"topic": "字典", "minutes": 40}]`, "输出30。", `records = [{"topic": "字典", "minutes": 20}, {"topic": "文件", "minutes": 50}, {"topic": "字典", "minutes": 40}]
+minutes = []
+for record in records:
+    if record["topic"] == "字典":
+        minutes.append(record["minutes"])
+print(sum(minutes) / len(minutes))`, both(["30"], ["sum", "len"])),
+  task("46", "复习卡片", "用 enumerate 把 topics 输出为“第1题：字典”。", `topics = ["字典", "异常", "文件"]`, "输出第1题：字典和第3题：文件。", `topics = ["字典", "异常", "文件"]
+for index, topic in enumerate(topics, start=1):
+    print(f"第{index}题：{topic}")`, both(["第1题：字典", "第3题：文件"], ["enumerate"])),
+  task("47", "库存预警", "items 中 count 小于 5 的输出“名称需要补货”。", `items = [{"name": "笔", "count": 3}, {"name": "本", "count": 10}]`, "输出笔需要补货。", `items = [{"name": "笔", "count": 3}, {"name": "本", "count": 10}]
+for item in items:
+    if item["count"] < 5:
+        print(f"{item['name']}需要补货")`, both(["笔需要补货"], ["if"])),
+  task("48", "随机但可复现", "固定 seed=2，从 actions 中抽一个动作并输出。", `actions = ["阅读", "练习", "复盘"]`, "输出阅读。", `import random
+actions = ["阅读", "练习", "复盘"]
+random.seed(2)
+print(random.choice(actions))`, both(["阅读"], ["random.seed", "random.choice"])),
+  task("49", "向上取整分页", "每页 10 条，items=23，计算需要几页。", `items = 23`, "输出3。", `import math
+items = 23
+pages = math.ceil(items / 10)
+print(pages)`, both(["3"], ["math.ceil"])),
+  task("50", "日期学习日志", "使用 date.today() 输出“学习日期：日期”。", "", "输出学习日期：。", `from datetime import date
+print(f"学习日期：{date.today()}")`, both(["学习日期："], ["date.today"])),
+  task("51", "嵌套统计字典", "把 records 按 topic 汇总为字典并输出。", `records = [{"topic": "字典", "minutes": 20}, {"topic": "文件", "minutes": 10}, {"topic": "字典", "minutes": 30}]`, "输出字典50和文件10。", `records = [{"topic": "字典", "minutes": 20}, {"topic": "文件", "minutes": 10}, {"topic": "字典", "minutes": 30}]
+summary = {}
+for record in records:
+    topic = record["topic"]
+    summary[topic] = summary.get(topic, 0) + record["minutes"]
+print(summary)`, both(["字典", "50", "文件", "10"], ["get"])),
+  task("52", "生成学习建议", "如果总分钟数小于 60 输出继续加练，否则输出达标。", `records = [{"minutes": 20}, {"minutes": 30}]`, "输出继续加练。", `records = [{"minutes": 20}, {"minutes": 30}]
+total = 0
+for record in records:
+    total += record["minutes"]
+if total < 60:
+    print("继续加练")
+else:
+    print("达标")`, both(["继续加练"], ["if", "else"])),
+  task("53", "清洗姓名并编号", "清洗 names 后输出编号列表。", `names = [" 小林 ", "", "小周"]`, "输出1. 小林和2. 小周。", `names = [" 小林 ", "", "小周"]
+clean = [name.strip() for name in names if name.strip()]
+for index, name in enumerate(clean, start=1):
+    print(f"{index}. {name}")`, both(["1. 小林", "2. 小周"], ["strip", "enumerate"])),
+  task("54", "安全读取嵌套列表", "尝试输出第二个学生姓名，缺失时输出没有第二人。", `students = [{"name": "A"}]`, "输出没有第二人。", `students = [{"name": "A"}]
+try:
+    print(students[1]["name"])
+except IndexError:
+    print("没有第二人")`, both(["没有第二人"], ["IndexError"])),
+  task("55", "记录添加与查看", "定义 add_task 和 list_tasks，添加两条后逐行输出标题。", "", "输出阅读和练习。", `tasks = []
+def add_task(title):
+    tasks.append({"title": title, "done": False})
+def list_tasks():
+    for task in tasks:
+        print(task["title"])
+add_task("阅读")
+add_task("练习")
+list_tasks()`, both(["阅读", "练习"], ["def", "append"])),
+  task("56", "完成任务报告", "定义 complete(title)，把匹配标题的任务设为完成。", `tasks = [{"title": "阅读", "done": False}, {"title": "练习", "done": False}]`, "输出阅读 True。", `tasks = [{"title": "阅读", "done": False}, {"title": "练习", "done": False}]
+def complete(title):
+    for task in tasks:
+        if task["title"] == title:
+            task["done"] = True
+complete("阅读")
+print(tasks[0]["title"], tasks[0]["done"])`, both(["阅读 True"], ["def", "if"])),
+  task("57", "文本生成任务列表", "从多行文本生成 tasks 列表，每行是一个 title。", `text = "阅读\\n练习\\n复盘"`, "输出包含三条任务。", `text = "阅读\\n练习\\n复盘"
+tasks = []
+for line in text.split("\\n"):
+    tasks.append({"title": line, "done": False})
+print(tasks)`, both(["阅读", "练习", "复盘"], ["append"])),
+  task("58", "任务导出文本", "把 tasks 导出为 ✓/□ 多行文本。", `tasks = [{"title": "阅读", "done": True}, {"title": "练习", "done": False}]`, "输出✓ 阅读和□ 练习。", `tasks = [{"title": "阅读", "done": True}, {"title": "练习", "done": False}]
+lines = []
+for task in tasks:
+    mark = "✓" if task["done"] else "□"
+    lines.append(f"{mark} {task['title']}")
+print("\\n".join(lines))`, both(["✓ 阅读", "□ 练习"], ["join"])),
+  task("59", "学习分析函数组", "定义 total_minutes 和 best_topic，输出总计90和最高主题文件。", `records = [{"topic": "字典", "minutes": 30}, {"topic": "文件", "minutes": 60}]`, "输出总计90和最高文件。", `records = [{"topic": "字典", "minutes": 30}, {"topic": "文件", "minutes": 60}]
+def total_minutes(records):
+    total = 0
+    for record in records:
+        total += record["minutes"]
+    return total
+def best_topic(records):
+    best = records[0]
+    for record in records:
+        if record["minutes"] > best["minutes"]:
+            best = record
+    return best["topic"]
+print(f"总计{total_minutes(records)}")
+print(f"最高{best_topic(records)}")`, both(["总计90", "最高文件"], ["def", "return"])),
+  task("60", "进阶毕业小项目", "做一个内存版学习日志：添加记录、按主题统计、输出报告。", "", "输出字典50和总计90。", `records = []
+def add_record(topic, minutes):
+    records.append({"topic": topic, "minutes": minutes})
+def total_by_topic(topic):
+    total = 0
+    for record in records:
+        if record["topic"] == topic:
+            total += record["minutes"]
+    return total
+def report():
+    total = 0
+    for record in records:
+        total += record["minutes"]
+    return f"字典{total_by_topic('字典')}，总计{total}"
+add_record("字典", 20)
+add_record("文件", 40)
+add_record("字典", 30)
+print(report())`, both(["字典50", "总计90"], ["def", "append", "return"]))
 ];
 
 export const intermediateExamExerciseCount = intermediateExamExercises.length;

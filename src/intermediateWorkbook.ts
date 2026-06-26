@@ -51,7 +51,23 @@ for key, value in profile.items():
 print(user.get("age", "未知"))`, both(["未知"], ["get"])),
       ex("d6", "综合", "成绩报告", "student 包含 name 和 score，根据 score 输出“小白：通过”。", `student = {"name": "小白", "score": 76}`, "输出小白：通过。", `student = {"name": "小白", "score": 76}
 status = "通过" if student["score"] >= 60 else "继续努力"
-print(f"{student['name']}：{status}")`, output("小白：通过"))
+print(f"{student['name']}：{status}")`, output("小白：通过")),
+      ex("d7", "补全", "新增字段", "给 profile 增加 city='上海'，并输出城市。", `profile = {"name": "小安"}
+# 新增 city
+print(profile["city"])`, "输出上海。", `profile = {"name": "小安"}
+profile["city"] = "上海"
+print(profile["city"])`, output("上海")),
+      ex("d8", "改错", "读取默认积分", "修复代码：user 没有 points 时输出 0。", `user = {"name": "小安"}
+print(user["points"])`, "输出0。", `user = {"name": "小安"}
+print(user.get("points", 0))`, both(["0"], ["get"])),
+      ex("d9", "独立", "字典累加", "summary 中 math 为 2，把它加 3 后输出 5。", `summary = {"math": 2}`, "输出5。", `summary = {"math": 2}
+summary["math"] += 3
+print(summary["math"])`, output("5")),
+      ex("d10", "独立", "格式化资料卡", "把 profile 输出成“小安来自上海”。", `profile = {"name": "小安", "city": "上海"}`, "输出小安来自上海。", `profile = {"name": "小安", "city": "上海"}
+print(f"{profile['name']}来自{profile['city']}")`, output("小安来自上海")),
+      ex("d11", "综合", "商品小票", "item 有 name、price、count，输出“苹果合计12元”。", `item = {"name": "苹果", "price": 4, "count": 3}`, "输出苹果合计12元。", `item = {"name": "苹果", "price": 4, "count": 3}
+total = item["price"] * item["count"]
+print(f"{item['name']}合计{total}元")`, both(["苹果合计12元"], ["*"]))
     ]
   },
   {
@@ -86,7 +102,31 @@ print(best["name"])`, both(["小周"], ["for", "if"])),
       ex("n6", "综合", "生成任务看板", "逐项输出 ✓/□ 和标题。", `tasks = [{"title": "阅读", "done": True}, {"title": "复盘", "done": False}]`, "输出 ✓ 阅读 和 □ 复盘。", `tasks = [{"title": "阅读", "done": True}, {"title": "复盘", "done": False}]
 for task in tasks:
     mark = "✓" if task["done"] else "□"
-    print(f"{mark} {task['title']}")`, output("✓ 阅读", "□ 复盘"))
+    print(f"{mark} {task['title']}")`, output("✓ 阅读", "□ 复盘")),
+      ex("n7", "补全", "收集高分", "把 score 大于等于 90 的学生姓名加入 names。", `students = [{"name": "A", "score": 88}, {"name": "B", "score": 93}]
+names = []`, "输出B。", `students = [{"name": "A", "score": 88}, {"name": "B", "score": 93}]
+names = []
+for student in students:
+    if student["score"] >= 90:
+        names.append(student["name"])
+print(names)`, both(["B"], ["append"])),
+      ex("n8", "改错", "列表索引", "修复代码，输出第二条记录的 title。", `tasks = [{"title": "阅读"}, {"title": "练习"}]
+print(tasks["title"])`, "输出练习。", `tasks = [{"title": "阅读"}, {"title": "练习"}]
+print(tasks[1]["title"])`, output("练习")),
+      ex("n9", "独立", "计算总时长", "records 中有 minutes，输出总计 75。", `records = [{"minutes": 20}, {"minutes": 25}, {"minutes": 30}]`, "输出75。", `records = [{"minutes": 20}, {"minutes": 25}, {"minutes": 30}]
+total = 0
+for record in records:
+    total += record["minutes"]
+print(total)`, both(["75"], ["for"])),
+      ex("n10", "独立", "修改嵌套字段", "把第一项任务 done 改成 True，并输出 True。", `tasks = [{"title": "阅读", "done": False}]`, "输出True。", `tasks = [{"title": "阅读", "done": False}]
+tasks[0]["done"] = True
+print(tasks[0]["done"])`, output("True")),
+      ex("n11", "综合", "按类别汇总", "统计 records 中 type 为 study 的总分钟数。", `records = [{"type": "study", "minutes": 20}, {"type": "rest", "minutes": 10}, {"type": "study", "minutes": 35}]`, "输出55。", `records = [{"type": "study", "minutes": 20}, {"type": "rest", "minutes": 10}, {"type": "study", "minutes": 35}]
+total = 0
+for record in records:
+    if record["type"] == "study":
+        total += record["minutes"]
+print(total)`, both(["55"], ["if"]))
     ]
   },
   {
@@ -115,7 +155,24 @@ clean = [name.strip() for name in names if name.strip()]
 print(clean)`, both(["小林", "小周"], ["strip"])),
       ex("c6", "综合", "生成展示行", "把 tasks 转成“1. 阅读”这样的行。", `tasks = ["阅读", "练习"]`, "输出1. 阅读和2. 练习。", `tasks = ["阅读", "练习"]
 lines = [f"{index}. {task}" for index, task in enumerate(tasks, start=1)]
-print(lines)`, both(["1. 阅读", "2. 练习"], ["enumerate"]))
+print(lines)`, both(["1. 阅读", "2. 练习"], ["enumerate"])),
+      ex("c7", "补全", "价格加税", "用推导式把 prices 每项乘以 1.1。", `prices = [10, 20]`, "输出11和22。", `prices = [10, 20]
+with_tax = [price * 1.1 for price in prices]
+print(with_tax)`, both(["11", "22"], ["for"])),
+      ex("c8", "改错", "提取字段", "修复推导式，输出所有 topic。", `records = [{"topic": "字典"}, {"topic": "文件"}]
+topics = [topic for record in records]
+print(topics)`, "输出字典和文件。", `records = [{"topic": "字典"}, {"topic": "文件"}]
+topics = [record["topic"] for record in records]
+print(topics)`, both(["字典", "文件"], ["record"])),
+      ex("c9", "独立", "保留偶数", "用推导式保留 numbers 中的偶数。", `numbers = [1, 2, 3, 4]`, "输出2和4。", `numbers = [1, 2, 3, 4]
+evens = [number for number in numbers if number % 2 == 0]
+print(evens)`, both(["2", "4"], ["%"])),
+      ex("c10", "独立", "生成标签", "把 topics 转成“复习：字典”这样的列表。", `topics = ["字典", "文件"]`, "输出复习：字典和复习：文件。", `topics = ["字典", "文件"]
+labels = [f"复习：{topic}" for topic in topics]
+print(labels)`, both(["复习：字典", "复习：文件"], ["for"])),
+      ex("c11", "综合", "筛选并格式化", "从 records 中筛选 minutes>=30，生成“字典 30分钟”这样的行。", `records = [{"topic": "字典", "minutes": 30}, {"topic": "休息", "minutes": 5}, {"topic": "文件", "minutes": 40}]`, "输出字典30分钟和文件40分钟。", `records = [{"topic": "字典", "minutes": 30}, {"topic": "休息", "minutes": 5}, {"topic": "文件", "minutes": 40}]
+lines = [f"{record['topic']} {record['minutes']}分钟" for record in records if record["minutes"] >= 30]
+print(lines)`, both(["字典 30分钟", "文件 40分钟"], ["if"]))
     ]
   },
   {
@@ -163,7 +220,37 @@ for item in raw_scores:
         scores.append(int(item))
     except ValueError:
         pass
-print(sum(scores) / len(scores))`, both(["85"], ["try", "sum"]))
+print(sum(scores) / len(scores))`, both(["85"], ["try", "sum"])),
+      ex("e7", "补全", "缺字段用默认", "读取 record['score']，缺失时输出 0。", `record = {"name": "A"}`, "输出0。", `record = {"name": "A"}
+try:
+    print(record["score"])
+except KeyError:
+    print(0)`, both(["0"], ["KeyError"])),
+      ex("e8", "改错", "转换前去空格", "修复代码，把 ' 12 ' 转成数字并输出。", `text = " 12 "
+print(int(text))`, "输出12。", `text = " 12 "
+print(int(text.strip()))`, both(["12"], ["strip"])),
+      ex("e9", "独立", "安全除法函数", "定义 safe_divide(a,b)，b 为 0 时返回“无法计算”。", "", "输出无法计算。", `def safe_divide(a, b):
+    try:
+        return a / b
+    except ZeroDivisionError:
+        return "无法计算"
+print(safe_divide(10, 0))`, both(["无法计算"], ["def", "try"])),
+      ex("e10", "独立", "统计坏数据", "遍历 raw，统计不能转成 int 的数量。", `raw = ["1", "x", "2", "y"]`, "输出2。", `raw = ["1", "x", "2", "y"]
+bad_count = 0
+for item in raw:
+    try:
+        int(item)
+    except ValueError:
+        bad_count += 1
+print(bad_count)`, both(["2"], ["except"])),
+      ex("e11", "综合", "安全读取多条记录", "records 中部分缺 minutes，缺失时跳过，输出总计50。", `records = [{"minutes": 20}, {"topic": "空"}, {"minutes": 30}]`, "输出50。", `records = [{"minutes": 20}, {"topic": "空"}, {"minutes": 30}]
+total = 0
+for record in records:
+    try:
+        total += record["minutes"]
+    except KeyError:
+        pass
+print(total)`, both(["50"], ["KeyError", "pass"]))
     ]
   },
   {
@@ -194,7 +281,30 @@ for line in text.split("\\n"):
 print(lines)`, both(["A", "B"], ["strip"])),
       ex("f6", "综合", "生成 Markdown 清单", "把 tasks 变成 - 阅读 这样的 Markdown 文本。", `tasks = ["阅读", "练习"]`, "输出 - 阅读 和 - 练习。", `tasks = ["阅读", "练习"]
 lines = [f"- {task}" for task in tasks]
-print("\\n".join(lines))`, both(["- 阅读", "- 练习"], ["join"]))
+print("\\n".join(lines))`, both(["- 阅读", "- 练习"], ["join"])),
+      ex("f7", "补全", "拆逗号", "把 line 拆成 topic 和 minutes，并输出 topic。", `line = "字典,30"`, "输出字典。", `line = "字典,30"
+topic, minutes = line.split(",")
+print(topic)`, both(["字典"], ["split"])),
+      ex("f8", "改错", "去掉行首空格", "修复代码，让每行输出时没有多余空格。", `text = " A\\n B"
+for line in text.split("\\n"):
+    print(line)`, "输出A和B。", `text = " A\\n B"
+for line in text.split("\\n"):
+    print(line.strip())`, both(["A", "B"], ["strip"])),
+      ex("f9", "独立", "文本转数字", "把 text 中每一行数字相加，输出 60。", `text = "10\\n20\\n30"`, "输出60。", `text = "10\\n20\\n30"
+total = 0
+for line in text.split("\\n"):
+    total += int(line)
+print(total)`, both(["60"], ["int"])),
+      ex("f10", "独立", "CSV 小记录", "把 '周一,字典,30' 拆成字典并输出。", `line = "周一,字典,30"`, "输出周一、字典、30。", `line = "周一,字典,30"
+day, topic, minutes = line.split(",")
+record = {"day": day, "topic": topic, "minutes": int(minutes)}
+print(record)`, both(["周一", "字典", "30"], ["split", "int"])),
+      ex("f11", "综合", "多行记录报告", "从多行文本中读取分钟数，输出总计70分钟。", `text = "周一,字典,30\\n周二,文件,40"`, "输出总计70分钟。", `text = "周一,字典,30\\n周二,文件,40"
+total = 0
+for line in text.split("\\n"):
+    day, topic, minutes = line.split(",")
+    total += int(minutes)
+print(f"总计{total}分钟")`, both(["总计70分钟"], ["split", "int"]))
     ]
   },
   {
@@ -221,7 +331,25 @@ random.seed(1)
 print(random.choice(items))`, both(["红"], ["seed"])),
       ex("m6", "综合", "抽取复习题", "从 topics 随机抽一个，输出“今天复习：主题”。", `topics = ["字典", "异常", "文件"]`, "输出今天复习。", `import random
 topics = ["字典", "异常", "文件"]
-print(f"今天复习：{random.choice(topics)}")`, both(["今天复习："], ["random.choice"]))
+print(f"今天复习：{random.choice(topics)}")`, both(["今天复习："], ["random.choice"])),
+      ex("m7", "补全", "向下取整", "用 math.floor 把 4.9 变成 4。", `number = 4.9`, "输出4。", `import math
+number = 4.9
+print(math.floor(number))`, both(["4"], ["math.floor"])),
+      ex("m8", "改错", "随机模块名", "修复代码，固定 seed 后抽取一个颜色。", `import Random
+colors = ["红", "蓝"]
+Random.seed(1)
+print(Random.choice(colors))`, "输出一个颜色。", `import random
+colors = ["红", "蓝"]
+random.seed(1)
+print(random.choice(colors))`, both(["红"], ["random.seed"])),
+      ex("m9", "独立", "四舍五入", "用 round 把 3.14159 保留 2 位小数。", `number = 3.14159`, "输出3.14。", `number = 3.14159
+print(round(number, 2))`, both(["3.14"], ["round"])),
+      ex("m10", "独立", "日期字符串", "用 date.today() 输出“今天是：日期”。", "", "输出今天是：。", `from datetime import date
+print(f"今天是：{date.today()}")`, both(["今天是："], ["date.today"])),
+      ex("m11", "综合", "随机鼓励语", "固定 seed，从 messages 中抽一句并输出“提示：...”。", `messages = ["继续", "复盘", "练习"]`, "输出提示：继续。", `import random
+messages = ["继续", "复盘", "练习"]
+random.seed(1)
+print(f"提示：{random.choice(messages)}")`, both(["提示：继续"], ["random.choice", "seed"]))
     ]
   },
   {
@@ -257,7 +385,36 @@ print(count)`, both(["2"], ["if"])),
 total = 0
 for record in records:
     total += record["minutes"]
-print(f"共{len(records)}条，合计{total}分钟")`, both(["共2条，合计70分钟"], ["len"]))
+print(f"共{len(records)}条，合计{total}分钟")`, both(["共2条，合计70分钟"], ["len"])),
+      ex("data7", "补全", "去掉无效记录", "只保留 minutes 大于 0 的记录。", `records = [{"minutes": 30}, {"minutes": 0}, {"minutes": 20}]`, "输出30和20。", `records = [{"minutes": 30}, {"minutes": 0}, {"minutes": 20}]
+valid = []
+for record in records:
+    if record["minutes"] > 0:
+        valid.append(record)
+print(valid)`, both(["30", "20"], ["append"])),
+      ex("data8", "改错", "平均值分母", "修复代码，输出平均 20。", `values = [10, 20, 30]
+print(sum(values) / sum(values))`, "输出20。", `values = [10, 20, 30]
+print(sum(values) / len(values))`, both(["20"], ["len"])),
+      ex("data9", "独立", "按主题合计", "统计 topic 为 文件 的总分钟数。", `records = [{"topic": "文件", "minutes": 10}, {"topic": "字典", "minutes": 20}, {"topic": "文件", "minutes": 30}]`, "输出40。", `records = [{"topic": "文件", "minutes": 10}, {"topic": "字典", "minutes": 20}, {"topic": "文件", "minutes": 30}]
+total = 0
+for record in records:
+    if record["topic"] == "文件":
+        total += record["minutes"]
+print(total)`, both(["40"], ["if"])),
+      ex("data10", "独立", "生成主题集合", "从 records 中提取不重复 topic，输出包含字典和文件。", `records = [{"topic": "字典"}, {"topic": "文件"}, {"topic": "字典"}]`, "输出字典和文件。", `records = [{"topic": "字典"}, {"topic": "文件"}, {"topic": "字典"}]
+topics = []
+for record in records:
+    if record["topic"] not in topics:
+        topics.append(record["topic"])
+print(topics)`, both(["字典", "文件"], ["not in"])),
+      ex("data11", "综合", "清洗统计报告", "raw 里有空项和坏数据，清洗后输出“有效2条，合计30”。", `raw = ["10", "", "bad", "20"]`, "输出有效2条，合计30。", `raw = ["10", "", "bad", "20"]
+numbers = []
+for item in raw:
+    try:
+        numbers.append(int(item))
+    except ValueError:
+        pass
+print(f"有效{len(numbers)}条，合计{sum(numbers)}")`, both(["有效2条，合计30"], ["try", "sum"]))
     ]
   },
   {
@@ -308,7 +465,46 @@ def report():
     return f"总计{total}分钟"
 add_record("字典", 30)
 add_record("文件", 40)
-print(report())`, both(["总计70分钟"], ["def", "append", "return"]))
+print(report())`, both(["总计70分钟"], ["def", "append", "return"])),
+      ex("p7", "补全", "完成记录函数", "定义 complete(index)，把指定任务 done 改为 True。", `tasks = [{"title": "A", "done": False}]`, "输出True。", `tasks = [{"title": "A", "done": False}]
+def complete(index):
+    tasks[index]["done"] = True
+complete(0)
+print(tasks[0]["done"])`, both(["True"], ["def"])),
+      ex("p8", "改错", "函数参数", "修复函数，让它能添加任意主题和分钟数。", `records = []
+def add_record():
+    records.append({"topic": topic, "minutes": minutes})
+add_record("字典", 30)
+print(records)`, "输出字典和30。", `records = []
+def add_record(topic, minutes):
+    records.append({"topic": topic, "minutes": minutes})
+add_record("字典", 30)
+print(records)`, both(["字典", "30"], ["topic", "minutes"])),
+      ex("p9", "独立", "按完成状态统计", "定义 count_done()，返回已完成任务数。", `tasks = [{"done": True}, {"done": False}, {"done": True}]`, "输出2。", `tasks = [{"done": True}, {"done": False}, {"done": True}]
+def count_done():
+    count = 0
+    for task in tasks:
+        if task["done"]:
+            count += 1
+    return count
+print(count_done())`, both(["2"], ["def", "return"])),
+      ex("p10", "独立", "格式化一条记录", "定义 format_record(record)，返回“字典：30分钟”。", "", "输出字典：30分钟。", `def format_record(record):
+    return f"{record['topic']}：{record['minutes']}分钟"
+record = {"topic": "字典", "minutes": 30}
+print(format_record(record))`, both(["字典：30分钟"], ["def", "return"])),
+      ex("p11", "综合", "迷你复盘工具", "定义 add_record、total_minutes、report，添加两条后输出“共2条，总计70分钟”。", "", "输出共2条，总计70分钟。", `records = []
+def add_record(topic, minutes):
+    records.append({"topic": topic, "minutes": minutes})
+def total_minutes():
+    total = 0
+    for record in records:
+        total += record["minutes"]
+    return total
+def report():
+    return f"共{len(records)}条，总计{total_minutes()}分钟"
+add_record("字典", 30)
+add_record("文件", 40)
+print(report())`, both(["共2条，总计70分钟"], ["def", "return", "append"]))
     ]
   }
 ];
